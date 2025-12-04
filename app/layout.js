@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -18,11 +19,29 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="id">
+      <body>
+        {/* --- NAVBAR PERMANEN --- */}
+        <nav style={{
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          padding: '20px 40px', 
+          backgroundColor: 'white', 
+          borderBottom: '1px solid #eaeaea',
+          alignItems: 'center'
+        }}>
+          <div style={{fontWeight: 'bold', fontSize: '20px', color: '#1e293b'}}>
+             ⚽ SportVenue
+          </div>
+          <div style={{display: 'flex', gap: '20px'}}>
+            <Link href="/" style={{textDecoration: 'none', color: '#64748b', fontWeight:'500'}}>Home</Link>
+            <Link href="/booking" style={{textDecoration: 'none', color: '#2563eb', fontWeight:'bold'}}>Cek Jadwal</Link>
+          </div>
+        </nav>
+
+        {/* Ini adalah isi halaman (Landing Page atau Booking) */}
         {children}
+        
       </body>
     </html>
   );
