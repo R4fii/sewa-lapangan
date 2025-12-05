@@ -3,72 +3,94 @@ import Database from 'better-sqlite3';
 
 const db = new Database('lapangan.db');
 
-// --- Cek Bentrok ---
-function cekBentrok(mulaiBaru, selesaiBaru, abaikanId = null) {
-  const bookings = db.prepare('SELECT * FROM bookings').all();
+// --- HELPER BENTROK ---
+// Cek bentrok hanya jika TANGGAL SAMA & JAM TABRAKAN
+function cekBentrok(tanggal, mulai, selesai, abaikanId = null) {
+  const bookings = db.prepare('SELECT * FROM bookings WHERE tanggal = ?').all(tanggal);
   
   for (const b of bookings) {
-    // Kalau sedang edit, jangan cek bentrok dengan diri sendiri
     if (abaikanId && b.id === abaikanId) continue;
-
-    // Logika Matematika Tabrakan Jadwal
-    if (mulaiBaru < b.jam_selesai && selesaiBaru > b.jam_mulai) {
-      return true; // Bentrok
+    
+    // Logika Tabrakan
+    if (mulai < b.jam_selesai && selesai > b.jam_mulai) {
+      return true; 
     }
   }
-  return false; // Aman
+  return false;
 }
 
-// 1. GET (Ambil Data & Hitung Status Real-time)
-export async function GET() {
-  const bookings = db.prepare('SELECT * FROM bookings ORDER BY jam_mulai ASC').all();
+export async function GET(req) {
+  // Ambil parameter tanggal dari URL (misal: ?date=2023-10-25)
+  const { searchParams } = new URL(req.url);
+  const filterTanggal = searchParams.get('date');
+
+  // Kalau ada filter tanggal, ambil tanggal itu saja. Kalau tidak, ambil semua.
+  let query = 'SELECT * FROM bookings ORDER BY tanggal ASC, jam_mulai ASC';
+  let params = [];
+
+  if (filterTanggal) {
+    query = 'SELECT * FROM bookings WHERE tanggal = ? ORDER BY jam_mulai ASC';
+    params = [filterTanggal];
+  }
+
+  const bookings = db.prepare(query).all(...params);
   
-  // Ambil waktu sekarang dalam MENIT juga
+  // --- LOGIKA STATUS REAL-TIME ---
   const now = new Date();
+  // Format tanggal hari ini jadi YYYY-MM-DD (sesuai format input HTML)
+  const todayStr = now.toISOString().split('T')[0]; 
   const menitSekarang = (now.getHours() * 60) + now.getMinutes();
 
   const hasil = bookings.map((b) => {
-    // Decision Tree: Apakah menit sekarang ada di antara jadwal?
-    const sedangMain = menitSekarang >= b.jam_mulai && menitSekarang < b.jam_selesai;
+    let status = "AKAN DATANG"; // Default
+    let warna = "blue";         // Biru (Future)
 
-    return {
-      ...b,
-      status: sedangMain ? "SEDANG DISEWA" : "TERSEDIA",
-      warna: sedangMain ? "red" : "green"
-    };
+    // 1. Cek apakah ini jadwal masa lalu?
+    if (b.tanggal < todayStr || (b.tanggal === todayStr && b.jam_selesai <= menitSekarang)) {
+      status = "SELESAI";
+      warna = "gray"; // Abu-abu (History)
+    }
+    // 2. Cek apakah SEDANG MAIN sekarang?
+    else if (b.tanggal === todayStr && menitSekarang >= b.jam_mulai && menitSekarang < b.jam_selesai) {
+      status = "SEDANG MAIN";
+      warna = "red";  // Merah (Busy)
+    }
+    // 3. Sisanya berarti "AKAN DATANG" (Hijau/Biru)
+    else {
+      status = "BOOKED";
+      warna = "green"; 
+    }
+
+    return { ...b, status, warna };
   });
 
   return NextResponse.json(hasil);
 }
 
-// 2. POST (Tambah Baru dengan Cek Bentrok)
 export async function POST(req) {
-  const { nama, mulai, selesai } = await req.json();
+  const { nama, tanggal, mulai, selesai } = await req.json();
 
-  if (cekBentrok(mulai, selesai)) {
-    return NextResponse.json({ error: "Jadwal BENTROK dengan tim lain!" }, { status: 400 });
+  if (cekBentrok(tanggal, mulai, selesai)) {
+    return NextResponse.json({ error: "Jadwal BENTROK di tanggal tersebut!" }, { status: 400 });
   }
 
-  const stmt = db.prepare('INSERT INTO bookings (nama_lapangan, jam_mulai, jam_selesai) VALUES (?, ?, ?)');
-  stmt.run(nama, mulai, selesai);
+  const stmt = db.prepare('INSERT INTO bookings (nama_lapangan, tanggal, jam_mulai, jam_selesai) VALUES (?, ?, ?, ?)');
+  stmt.run(nama, tanggal, mulai, selesai);
   return NextResponse.json({ message: "Sukses" });
 }
 
-// 3. PUT (Edit Jadwal)
 export async function PUT(req) {
-  const { id, nama, mulai, selesai } = await req.json();
+  const { id, nama, tanggal, mulai, selesai } = await req.json();
 
-  // Cek bentrok, tapi kecualikan ID diri sendiri (karena mau mereplace data lama)
-  if (cekBentrok(mulai, selesai, id)) {
-    return NextResponse.json({ error: "Gagal Edit: Jadwal baru BENTROK!" }, { status: 400 });
+  if (cekBentrok(tanggal, mulai, selesai, id)) {
+    return NextResponse.json({ error: "Gagal Edit: Jadwal BENTROK!" }, { status: 400 });
   }
 
-  const stmt = db.prepare('UPDATE bookings SET nama_lapangan=?, jam_mulai=?, jam_selesai=? WHERE id=?');
-  stmt.run(nama, mulai, selesai, id);
+  const stmt = db.prepare('UPDATE bookings SET nama_lapangan=?, tanggal=?, jam_mulai=?, jam_selesai=? WHERE id=?');
+  stmt.run(nama, tanggal, mulai, selesai, id);
   return NextResponse.json({ message: "Update Sukses" });
 }
 
-// 4. DELETE (Hapus)
 export async function DELETE(req) {
   const { id } = await req.json();
   db.prepare('DELETE FROM bookings WHERE id = ?').run(id);

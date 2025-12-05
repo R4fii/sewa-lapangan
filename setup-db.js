@@ -5,12 +5,13 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nama_lapangan TEXT,
+    tanggal TEXT,
     jam_mulai INTEGER,
     jam_selesai INTEGER
   )
 `);
 
-// Hapus data lama (biar bersih saat kita coba ulang)
+// Hapus data lama
 db.exec('DELETE FROM bookings');
 
 // Fungsi konversi jam:menit ke Total Menit
@@ -25,4 +26,4 @@ insert.run('Lapangan Utara', 14, 17);
 // Contoh: Lapangan Selatan
 insert.run('Lapangan Selatan', 16, 18);
 
-console.log("Database berhasil direset!");
+console.log("Database berhasil dibuat");
