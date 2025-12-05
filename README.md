@@ -28,8 +28,6 @@ Aplikasi web sederhana untuk melakukan pemesanan lapangan sepak bola secara onli
 
 ## 📁 Struktur Proyek
 
-Kurang lebih kayak gini (versi ringkas):
-
 📦 sewa-lapangan
 ├─ 📂 app
 ├─ 📂 components
@@ -79,8 +77,3 @@ Project ini dirilis menggunakan lisensi MIT — bebas dipakai, dimodifikasi, dan
 
 Punya ide atau mau kolaborasi?
 👉 GitHub Issues atau Pull Request.
-
-
----
-
-Kalo mau versi bahasa Inggris atau mau ditambah screenshot UI, badge, atau demo deployment, bilang aja.

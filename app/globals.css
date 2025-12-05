@@ -1,16 +1,31 @@
-/* app/globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
 html, body {
   padding: 0;
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f0f2f5; /* Latar belakang abu-abu muda yang modern */
-  color: #333; /* Warna tulisan default hitam */
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  color: #334155;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
   box-sizing: border-box;
 }
 
-input, button {
-  font-family: inherit;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+button {
+  transition: all 0.2s ease;
+}
+button:active {
+  transform: scale(0.95);
 }
