@@ -80,5 +80,3 @@ Punya ide atau mau kolaborasi?
 
 
 ---
-
-Kalo mau versi bahasa Inggris atau mau ditambah screenshot UI, badge, atau demo deployment, bilang aja.
